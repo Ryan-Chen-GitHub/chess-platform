@@ -2,7 +2,7 @@
 # ForeignKey links tables together
 # Mapped & mapped_column allows for declaration of columns
 # relationship allows for nevigation between linked rows in Python
-from datetime import datetime  # noqa: I001
+from datetime import datetime
 from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
@@ -96,5 +96,5 @@ class Move(Base):
         # Fast lookup of a game's move order. unique=True guarantees
         # a game can't have two moves in the same ply.
         Index("ix_moves_game_ply", "game_id", "ply", unique=True),
-        Index("ix_moves_ply_san", "ply", "san")
+        Index("ix_moves_ply_san", "ply", "san"),
     )

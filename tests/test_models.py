@@ -1,9 +1,8 @@
-from sqlalchemy import create_engine  # noqa: I001
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.db import Base
 from app.models import Game, Move, Player
-
 
 def test_game_with_moves_round_trip():
     # An in-memory database exists only for this test, so tests never touch
