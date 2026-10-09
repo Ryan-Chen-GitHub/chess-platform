@@ -1,8 +1,7 @@
 # insert() builds a bulk INSERT statement; select() builds a SELECT query.
+import chess.pgn
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
-
-import chess.pgn
 
 from app.ingest.parser import ParsedGame, parse_game
 from app.models import Game, Move, Player

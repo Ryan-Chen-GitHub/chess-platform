@@ -9,7 +9,7 @@ import httpx
 
 def export_games(username: str, max_games: int, out_path: Path) -> None:
     """Download a player's games from the Lichess API as one PGN file."""
-    # Lichess's public endpoint for a user's games. No login is needed.
+    # Lichess's public endpoint for a user's games. No login needed.
     url = f"https://lichess.org/api/games/user/{username}"
 
     # Deliberately minimal parameters. "perfType" is left out because the
@@ -20,15 +20,16 @@ def export_games(username: str, max_games: int, out_path: Path) -> None:
         "opening": "true",  # include the opening name and ECO code
     }
 
-        # Lichess asks API clients to identify themselves with a User-Agent.
+    # Lichess asks API clients to identify themselves with a User-Agent.
     # Without the Accept header, Lichess returns PGN by default.
+    # So we use me! The guy that made the project :)
     headers = {"User-Agent": "chess-platform-portfolio (github.com/Ryan-Chen-GitHub)"}
 
     # Make sure the output folder (data/) exists. It's git-ignored, so it
-    # won't be there on a fresh clone.
+    # won't be there on fresh clones.
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # stream() downloads in chunks instead of loading everything into memory.
+    # stream() downloads in chunks instead of loading everything into memory at once.
     with httpx.stream(
         "GET", url, params=params, headers=headers, timeout=60
     ) as response:

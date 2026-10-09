@@ -10,7 +10,7 @@ def get_session() -> Iterator[Session]:
     """Give each API request its own database session, then close it.
 
     FastAPI calls this "dependency injection": endpoints declare that they
-    need a session, and FastAPI runs this function to supply one. Tests can
+    need a session, and FastAPI runs this function in response. Tests can
     swap it for an in-memory database without touching the endpoints.
     """
     # The "with" block guarantees the session is closed after the request,

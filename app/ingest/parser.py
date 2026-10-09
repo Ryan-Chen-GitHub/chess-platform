@@ -37,7 +37,8 @@ def _parse_datetime(headers) -> datetime | None:
     date = headers.get("UTCDate", headers.get("Date", ""))
     time = headers.get("UTCTime", "00:00:00")
     try:
-        return datetime.strptime(f"{date} {time}", "%Y.%m.%d %H:%M:%S")
+        # Lichess times are UTC, stored as naive UTC
+        return datetime.strptime(f"{date} {time}", "%Y.%m.%d %H:%M:%S") # noqa: DTZ007
     except ValueError:
         # Malformed or missing dates become NULL instead of crashing the import.
         return None
