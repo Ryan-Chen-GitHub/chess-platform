@@ -1,9 +1,10 @@
 # Chess Platform
 
+![CI](https://github.com/Ryan-Chen-GitHub/chess-platform/action/workflows/ci.yml/badge.svg)
 A backend that loads real chess games from Lichess into a relational database and serves analytics about them through a REST API.
 
-> **Status:** in development. Schema, ingestion pipeline, API endpoints, and CI are
-> working. large-dataset performance work is next.
+> **Status:** in development. Schema, ingestion pipeline, API endpoints, and CI
+> are working. Large-dataset performance work is next.
 
 ## Tech Stack
 
@@ -52,6 +53,14 @@ If PowerShell blocks the script, run the following once:
 
     Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
+### Returning to the project
+
+From a new terminal, go to the project folder and activate the environment again:
+
+    cd chess-platform
+    .venv\Scripts\Activate.ps1
+    git pull
+    
 ### Load Data
 
     python -m scripts.export_games DrNykterstein 500
