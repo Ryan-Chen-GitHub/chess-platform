@@ -2,13 +2,15 @@
 # "event" lets code run when a new connection is formed.
 # "DeclarativeBase" is the parent class for all table definitions
 # "sessionmaker" creates "sessions" aka objects used to read and write rows
+import os
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # Stores database in a file called "chess.db"
 # "engine" manages the connection to the database
 # Moving to PostgreSQL later means changing only this connection string
-DATABASE_URL = "sqlite:///chess.db"
+DATABASE_URL = os.environ.get("CHESS_DB_URL", "sqlite:///chess.db")
 engine = create_engine(DATABASE_URL)
 
 
