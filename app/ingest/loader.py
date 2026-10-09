@@ -89,10 +89,12 @@ def _flush_batch(
     stats["imported"] += len(new_pairs)
 
 
-def load_pgn(handle, session: Session, batch_size: int = BATCH_SIZE) -> dict[str, int]:
+def load_pgn(handle, session: Session, batch_size: int = BATCH_SIZE, on_batch=None) -> dict[str, int]:
     """Read every game from an open PGN file and store it in the database.
 
     Safe to run repeatedly: games already in the database are skipped.
+
+    on_batch: optional callback receiving the running stats after each batch.
     """
     stats = {"imported": 0, "duplicates": 0, "skipped": 0}
     cache: dict[str, int] = {}
@@ -112,10 +114,14 @@ def load_pgn(handle, session: Session, batch_size: int = BATCH_SIZE) -> dict[str
         batch.append(parsed)
         if len(batch) >= batch_size:
             _flush_batch(session, batch, cache, stats)
+            if on_batch:
+                on_batch(stats)
             batch = []
 
     # Write the final partial batch.
     if batch:
         _flush_batch(session, batch, cache, stats)
+        if on_batch:
+            on_batch(stats)
 
     return stats
