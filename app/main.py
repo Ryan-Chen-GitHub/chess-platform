@@ -1,6 +1,7 @@
 # Web Framework, turns Python functions --> HTTP endpoints
 # The router holds the endpoints we defined in routes.py.
 from fastapi import FastAPI
+
 from app.routes import router
 
 # Application object, Title used for auto-generated docs page at /docs

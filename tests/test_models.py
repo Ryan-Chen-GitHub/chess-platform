@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import Base
 from app.models import Game, Move, Player
 
+
 def test_game_with_moves_round_trip():
     # An in-memory database exists only for this test, so tests never touch
     # the real chess.db file and always start clean

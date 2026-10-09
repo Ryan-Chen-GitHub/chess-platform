@@ -3,9 +3,12 @@
 # Mapped & mapped_column allows for declaration of columns
 # relationship allows for nevigation between linked rows in Python
 from datetime import datetime
+
 from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db import Base
+
 
 class Player(Base):
     """One row per chess player (a Lichess username)."""

@@ -1,0 +1,4 @@
+# FastAPI's Depends() & Query() in argument defaults are the standard
+# pattern, so tell the bugbear rule (B008) they are safe.
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]

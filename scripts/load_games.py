@@ -14,7 +14,7 @@ if __name__ == "__main__":
     Base.metadata.create_all(engine)
 
     # encoding="utf-8" matters on Windows, where the default encoding can
-    # mangle player names and opening names containing special characters.
+    # mess up player names and opening names that have special characters.
     with path.open(encoding="utf-8") as handle, SessionLocal() as session:
         stats = load_pgn(handle, session)
 

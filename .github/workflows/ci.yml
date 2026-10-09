@@ -1,0 +1,32 @@
+# The name appears in the "Actions" tab on GitHub.
+name: CI
+
+# Run on every push to main and on every pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # GitHub provides a fresh Linux machine for each run.
+    runs-on: ubuntu-latest
+    steps:
+      # Download repository's code onto the machine
+      - uses: actions/checkout@v4
+
+      # Install Python. "cache: pip" reuses downloaded packages between runs.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      
+      # Install the necessary packages
+      - run: pip install -r requirements.txt
+
+      # Lint: catches unused imports, undefined names, and similar bugs.
+      - run: ruff check .
+
+      # Run the test suite. The job fails if any test fails.
+      - run: pytest
+      
