@@ -3,12 +3,11 @@
 ![CI](https://github.com/Ryan-Chen-GitHub/chess-platform/action/workflows/ci.yml/badge.svg)
 A backend that loads real chess games from Lichess into a relational database and serves analytics about them through a REST API.
 
-> **Status:** in development. Schema, ingestion pipeline, API endpoints, and CI
-> are working. Large-dataset performance work is next.
+> **Status:** working. Schema, ingestion pipeline, API endpoints, CI, and a benchmarked large-dataset load are in place.
 
 ## Tech Stack
 
-Python 3.14, FastAPI, SQLAlchemy, SQLite (PostgreSQL planned), python-chess, pytest, Pydantic, httpx, Ruff.
+Python 3.14, FastAPI, SQLAlchemy, SQLite (PostgreSQL planned), python-chess, pytest, Pydantic, httpx, Ruff, and zstandard.
 
 ## Database Schema
 
@@ -34,6 +33,20 @@ Python 3.14, FastAPI, SQLAlchemy, SQLite (PostgreSQL planned), python-chess, pyt
 - **Unique `lichess_id` on games.** Re-running an import can never create duplicate games.
 - **Foreign keys enforced.** SQLite ignores them by default, so they are turned on for every connection.
 - **Batched, idempotent ingestion.** Games are inserted in batches per transaction, moves are bulk-inserted, and re-running an import skips games already stored.
+
+## Performance
+
+Benchmarked on one month of real Lichess data (January 2013: 121,114 games,
+8.1 million moves) in SQLite. Full methodology and results are in
+[docs/performance.md](docs/performance.md).
+
+- **`ANALYZE` after each load** cut the "most common reply to 1.e4 at ~1500"
+  query from 717 ms to 264 ms (2.7x) by letting the planner start from the
+  selective move lookup. No schema change was needed.
+- **Two other indexes were tried and dropped.** A covering index on `moves`
+  made no difference, and an index on `games (white_elo)` made a rating-band
+  count about 5x slower than a full scan.
+- Reproduce with `python -m scripts.benchmark`.
 
 ## Getting Started
 
@@ -80,3 +93,10 @@ Interactive API docs are available at: http://127.0.0.1:8000/docs.
 ### Run the Tests
 
     pytest
+
+### Run the benchmark
+
+    python -m scripts.benchmark
+
+Set `CHESS_DB_URL` (for example `sqlite:///chess_big.db`) to benchmark a
+database other than the default.
