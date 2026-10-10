@@ -3,8 +3,7 @@
 ![CI](https://github.com/Ryan-Chen-GitHub/chess-platform/action/workflows/ci.yml/badge.svg)
 A backend that loads real chess games from Lichess into a relational database and serves analytics about them through a REST API.
 
-> **Status:** in development. Schema, ingestion pipeline, API endpoints, and CI
-> are working. Large-dataset performance work is next.
+> **Status:** working. Schema, ingestion pipeline, API endpoints, CI, and a benchmarked large-dataset load are in place.
 
 ## Tech Stack
 
@@ -80,3 +79,10 @@ Interactive API docs are available at: http://127.0.0.1:8000/docs.
 ### Run the Tests
 
     pytest
+
+### Run the benchmark
+
+    python -m scripts.benchmark
+
+Set `CHESS_DB_URL` (for example `sqlite:///chess_big.db`) to benchmark a
+database other than the default.
