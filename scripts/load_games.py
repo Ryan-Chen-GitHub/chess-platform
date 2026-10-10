@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import zstandard
+from sqlalchemy import text
 
 # Importing models registers the tables with Base.
 from app import models  # noqa: F401
@@ -35,6 +36,10 @@ if __name__ == "__main__":
     # mess up player names and opening names that have special characters.
     with open_pgn(path) as handle, SessionLocal() as session:
         stats = load_pgn(handle, session, batch_size=2000, on_batch=print_progress)
+        # Refresh planner statistics so SQLite picks efficient query plans
+        # for the newly loaded data.
+        session.execute(text("ANALYZE"))
+        session.commit()
 
     print(
         f"Imported {stats['imported']} games, "
