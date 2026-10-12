@@ -1,6 +1,7 @@
 # Chess Platform
 
-![CI](https://github.com/Ryan-Chen-GitHub/chess-platform/action/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Ryan-Chen-GitHub/chess-platform/actions/workflows/ci.yml/badge.svg)
+
 A backend that loads real chess games from Lichess into a relational database and serves analytics about them through a REST API.
 
 > **Status:** working. Schema, ingestion pipeline, API endpoints, CI, and a benchmarked large-dataset load are in place.
