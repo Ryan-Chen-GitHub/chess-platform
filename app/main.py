@@ -7,6 +7,7 @@ from app.routes import router
 
 # Application object, Title used for auto-generated docs page at /docs
 app = FastAPI(title="Chess Platform")
+
 # Browsers block cross-origin reads unless the server opts in. Only the local
 # front-end dev server is allowed, and only for read-only requests.
 app.add_middleware(
