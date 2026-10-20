@@ -10,8 +10,8 @@ from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.deps import get_session
-from app.models import Game, Player
-from app.schemas import OpeningCount, OpeningStats, PlayerRecord
+from app.models import Game, Move, Player
+from app.schemas import GameDetail, MoveOut, OpeningCount, OpeningStats, PlayerRecord
 
 router = APIRouter()
 
@@ -110,4 +110,29 @@ def player_record(username: str, session: Session = Depends(get_session)):
         losses=total - wins - draws,
         draws=draws,
         top_openings=_top_openings(session, 5, played),
+    )
+
+@router.get("/games/{lichess_id}", response_model=GameDetail)
+def game_detail(lichess_id: str, session: Session = Depends(get_session)):
+    """One game with its moves in order."""
+    # lichess_id has a unique index, so this lookup is a single index read.
+    game = session.scalar(select(Game).where(Game.lichess_id == lichess_id))
+    if game is None:
+        raise HTTPException(status_code=404, detail=f"Unknown game {lichess_id}")
+
+    # Ordering by ply returns the moves in the order they were played.
+    moves = session.scalars(
+        select(Move).where(Move.game_id == game.id).order_by(Move.ply)
+    )
+    return GameDetail(
+        lichess_id=game.lichess_id,
+        white=game.white.username,
+        black=game.black.username,
+        white_elo=game.white_elo,
+        black_elo=game.black_elo,
+        result=game.result,
+        eco=game.eco,
+        opening=game.opening,
+        played_at=game.played_at,
+        moves=[MoveOut(ply=m.ply, san=m.san, uci=m.uci) for m in moves],
     )
