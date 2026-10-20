@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.db import Base
 from app.deps import get_session
 from app.main import app
-from app.models import Game, Player
+from app.models import Game, Move, Player
 
 
 @pytest.fixture
@@ -34,7 +34,8 @@ def client():
         session.add_all(
             [
                 Game(lichess_id="g1", white=alice, black=bob, result="1-0",
-                     eco="C20", opening="King's Pawn Game"),
+                     eco="C20", opening="King's Pawn Game", 
+                     moves=[Move(ply=1, san="e4", uci="e2e4"),Move(ply=2, san="e5", uci="e7e5")]),
                 Game(lichess_id="g2", white=bob, black=alice, result="1-0",
                      eco="C20", opening="King's Pawn Game"),
                 Game(lichess_id="g3", white=alice, black=bob, result="1/2-1/2",
@@ -89,3 +90,16 @@ def test_player_record(client):
 # Testing if player errors work as expected
 def test_unknown_player_is_404(client):
     assert client.get("/players/nobody").status_code == 404
+
+# Testing if the game endpoint returns players and moves in order
+def test_game_detail(client):
+    response = client.get("/games/g1")
+    # Checked first, so a failure shows the status and error body.
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["white"] == "alice"
+    assert [m["san"] for m in data["moves"]] == ["e4","e5"]
+
+# Testing if 404 error is checked as expected
+def test_unknown_game_is_404(client):
+    assert client.get("/games/nope").status_code == 404
