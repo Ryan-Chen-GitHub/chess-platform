@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -12,6 +14,10 @@ from app.deps import get_session
 from app.main import app
 from app.models import Game, Move, Player
 
+
+def utc_naive(year: int, month: int, day: int) -> datetime:
+    """A naive datetime meant as UTC, matching how game times are stored."""
+    return datetime(year, month, day) # noqa: DTZ001
 
 @pytest.fixture
 def client():
@@ -33,13 +39,23 @@ def client():
         alice, bob = Player(username="alice"), Player(username="bob")
         session.add_all(
             [
-                Game(lichess_id="g1", white=alice, black=bob, result="1-0",
-                     eco="C20", opening="King's Pawn Game", 
-                     moves=[Move(ply=1, san="e4", uci="e2e4"),Move(ply=2, san="e5", uci="e7e5")]),
-                Game(lichess_id="g2", white=bob, black=alice, result="1-0",
-                     eco="C20", opening="King's Pawn Game"),
-                Game(lichess_id="g3", white=alice, black=bob, result="1/2-1/2",
-                     eco="B01", opening="Scandinavian Defense"),
+                Game(
+                    lichess_id="g1", white=alice, black=bob, result="1-0",
+                    eco="C20", opening="King's Pawn Game",
+                    moves=[Move(ply=1, san="e4", uci="e2e4"),
+                           Move(ply=2, san="e5", uci="e7e5")],
+                    played_at=utc_naive(2024, 1, 1),
+                ),
+                Game(
+                    lichess_id="g2", white=bob, black=alice, result="1-0",
+                    eco="C20", opening="King's Pawn Game",
+                    played_at=utc_naive(2024, 1, 2),
+                ),
+                Game(
+                    lichess_id="g3", white=alice, black=bob, result="1/2-1/2",
+                    eco="B01", opening="Scandinavian Defense",
+                    played_at=utc_naive(2024, 1, 3),
+                ),
             ]
         )
         session.commit()
@@ -103,3 +119,24 @@ def test_game_detail(client):
 # Testing if 404 error is checked as expected
 def test_unknown_game_is_404(client):
     assert client.get("/games/nope").status_code == 404
+
+# Testing that a player's game come back newest first, from their point of view
+def test_player_games_newest_first(client):
+    data = client.get("/players/alice/games").json()
+    assert [g["lichess_id"] for g in data] == ["g3", "g2", "g1"]
+    # g3 was a draw, g2 was won by bob (White), and g1 was won by alice (White).
+    assert [g["outcome"] for g in data] == ["draw", "loss", "win"]
+    # In g2 alice had Black, so her opponent was bob, the White palyer.
+    assert data[1]["player_color"] == "black"
+    assert data[1]["opponent"] == "bob"
+
+# Testing that the limit parameter caps the number of games returned
+def test_player_games_respects_limit(client):
+    data = client.get("/players/alice/games?limit=1").json()
+    assert [g["lichess_id"] for g in data] == ["g3"]
+
+# Testing that an unknown player gives a 404 with the expected message
+def test_player_games_unknown_player_is_404(client):
+    response = client.get("/players/nobody/games")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Unknown player nobody"
