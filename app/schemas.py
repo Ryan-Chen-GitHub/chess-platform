@@ -1,6 +1,7 @@
 # Pydantic models describe the exact JSON shape each endpoint returns.
 # FastAPI uses them to validate responses and to generate the /docs page.
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -56,3 +57,16 @@ class GameDetail(BaseModel):
     opening: str | None
     played_at: datetime | None
     moves: list[MoveOut]
+
+class GameSummary(BaseModel):
+    """One row of a player's recent games, seen from that player's side."""
+
+    lichess_id: str
+    opponent: str
+    # which colour the player had in this game.
+    player_color: Literal["white", "black"]
+    # The result from the player's point of view. 
+    # "unknown" covers unfinished games or unexpected results
+    outcome: Literal["win", "loss", "draw", "unknown"]
+    opening: str | None
+    played_at: datetime | None

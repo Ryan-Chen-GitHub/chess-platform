@@ -7,11 +7,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 # case builds SQL CASE expressions ("count this row only if..."), func gives
 # access to SQL functions like COUNT and SUM, or_ combines conditions.
 from sqlalchemy import case, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.deps import get_session
 from app.models import Game, Move, Player
-from app.schemas import GameDetail, MoveOut, OpeningCount, OpeningStats, PlayerRecord
+from app.schemas import (
+    GameDetail,
+    GameSummary,
+    MoveOut,
+    OpeningCount,
+    OpeningStats,
+    PlayerRecord,
+)
 
 router = APIRouter()
 
@@ -111,6 +118,57 @@ def player_record(username: str, session: Session = Depends(get_session)):
         draws=draws,
         top_openings=_top_openings(session, 5, played),
     )
+
+def _outcome(game: Game, player_id: int) -> str:
+    """Result of a game from one player's point of view."""
+    if game.result == "1/2-1/2":
+        return "draw"
+    # "1-0" kmeans White won and "0-1" means Black won, 
+    # So the player's color decides whether that is a win or loss.
+    player_is_white = game.white_id == player_id
+    if game.result == "1-0":
+        return "win" if player_is_white else "loss"
+    if game.result == "0-1":
+        return "loss" if player_is_white else "win"
+    return "unknown"
+
+@router.get("/players/{username}/games", response_model=list[GameSummary])
+def player_games(
+    username: str,
+    # Capped at 100 so one request cannot pull a player's whole history.
+    limit: int = Query(20, ge=1, le=100),
+    session: Session = Depends(get_session),
+):
+    """A player's most recent games, newest first. Usernames are case-sensitive."""
+    player = session.scalar(select(Player).where(Player.username == username))
+    if player is None:
+        raise HTTPException(status_code=404, detail=f"Unknown player {username}")
+
+    # selectinload fetches all the players for these games in one extra query
+    # instead of one query per game when .white and .black are read below.
+    games = session.scalars(
+        select(Game)
+        .where(or_(Game.white_id == player.id, Game.black_id == player.id))
+        .options(selectinload(Game.white), selectinload(Game.black))
+        # Newest first; the id breaks ties so the order is always stable.
+        .order_by(Game.played_at.desc(), Game.id.desc())
+        .limit(limit)
+    )
+
+    summaries = []
+    for game in games:
+        is_white = game.white_id == player.id
+        summaries.append(
+            GameSummary(
+                lichess_id=game.lichess_id,
+                opponent=game.black.username if is_white else game.white.username,
+                player_color="white" if is_white else "black",
+                outcome=_outcome(game, player.id),
+                opening=game.opening,
+                played_at=game.played_at,
+            )
+        )
+    return summaries
 
 @router.get("/games/{lichess_id}", response_model=GameDetail)
 def game_detail(lichess_id: str, session: Session = Depends(get_session)):
